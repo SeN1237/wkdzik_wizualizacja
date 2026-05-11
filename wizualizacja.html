@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WK DZIK - Hub Gier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --dzik-red: #ff0000;
+            --dzik-dark-red: #b30000;
+            --bg-main: #0a0a0a;
+            --bg-card: rgba(30, 30, 30, 0.6);
+        }
+
+        body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-main); color: #fff; margin: 0; background-image: radial-gradient(circle at top center, #220000, #000000); min-height: 100vh; overflow-x: hidden; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        header { text-align: center; margin-bottom: 40px; }
+        header h1 { font-size: 3em; text-transform: uppercase; margin: 0; }
+        header span { color: var(--dzik-red); }
+
+        .view-section { display: none; animation: fadeIn 0.5s ease-out; }
+        .view-active { display: block; }
+        
+        .btn-back { background: transparent; color: #aaa; border: 1px solid #aaa; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; font-weight: bold; transition: all 0.2s; font-family: 'Montserrat', sans-serif; }
+        .btn-back:hover { background: #333; color: white; }
+
+        .game-card { background: var(--bg-card); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); max-width: 800px; margin: 0 auto; position: relative; }
+        .game-header { text-align: center; margin-bottom: 20px; }
+        .game-header h2 { color: var(--dzik-red); margin-bottom: 5px; }
+
+        .stats-bar { display: flex; justify-content: space-between; align-items: center; font-size: 1.5em; font-weight: bold; margin-bottom: 20px; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 10px; border: 1px solid #333; }
+
+        .btn-start { width: 100%; padding: 15px; font-size: 1.5em; font-weight: bold; background: linear-gradient(45deg, var(--dzik-red), var(--dzik-dark-red)); color: white; border: none; border-radius: 10px; cursor: pointer; margin-top: 20px; text-transform: uppercase; transition: transform 0.2s; }
+        .btn-start:hover { transform: scale(1.02); }
+
+        .user-panel { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 20px 30px; margin-bottom: 40px; flex-wrap: wrap; gap: 20px; }
+        .user-info h3 { margin: 0; color: var(--dzik-red); }
+        .user-info p { margin: 5px 0 0; color: #aaa; display: none; }
+        .user-points-highlight { font-size: 1.3em; color: gold; font-weight: 900; }
+        
+        .btn-login { background: #fff; color: #000; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; font-family: 'Montserrat', sans-serif; transition: background 0.2s; }
+        .btn-login:hover { background: #ccc; }
+
+        .code-input-wrapper { display: flex; opacity: 0.5; pointer-events: none; transition: opacity 0.3s; }
+        .code-input-wrapper input { padding: 10px 15px; font-size: 1.1em; background: rgba(0,0,0,0.5); border: 2px solid #333; border-right: none; color: white; border-radius: 10px 0 0 10px; outline: none; width: 200px; }
+        .code-input-wrapper button { padding: 10px 20px; font-size: 1.1em; background: var(--dzik-red); color: white; border: none; border-radius: 0 10px 10px 0; cursor: pointer; font-weight: bold; }
+        
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
+        .game-thumbnail { background: var(--bg-card); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 25px; text-align: center; transition: transform 0.3s, border-color 0.3s; display: flex; flex-direction: column; justify-content: space-between; }
+        .game-thumbnail:hover { transform: translateY(-10px); border-color: var(--dzik-red); }
+
+        .btn-floating-rank { position: fixed; bottom: 30px; right: 30px; background: gold; color: #000; border: none; padding: 15px 25px; border-radius: 30px; font-size: 1.2em; font-weight: 900; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.8); z-index: 100; transition: transform 0.2s; font-family: 'Montserrat', sans-serif; text-transform: uppercase; }
+        .btn-floating-rank:hover { transform: scale(1.1); }
+
+        .rank-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: none; justify-content: center; align-items: center; }
+        .rank-content { background: var(--bg-card); backdrop-filter: blur(20px); border: 2px solid gold; border-radius: 20px; padding: 40px; width: 90%; max-width: 600px; position: relative; }
+        .rank-close { position: absolute; top: 15px; right: 20px; background: transparent; color: white; border: none; font-size: 2em; cursor: pointer; }
+        .rank-content h2 { text-align: center; color: gold; font-size: 2.5em; margin-top: 0; }
+        .rank-content p.prize { text-align: center; font-size: 1.2em; margin-bottom: 30px; }
+        .rank-table { width: 100%; border-collapse: collapse; }
+        .rank-table th, .rank-table td { padding: 15px; text-align: center; border-bottom: 1px solid #444; }
+        .rank-table th { color: #aaa; text-transform: uppercase; }
+        .rank-table tr.highlight { background: rgba(255, 215, 0, 0.1); font-weight: bold; border-left: 4px solid gold; }
+
+        .whack-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px; cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" style="font-size:35px"><text y="35">⛏️</text></svg>'), crosshair; }
+        .hole { background: #111; border: 3px solid #333; border-radius: 50%; height: 100px; position: relative; overflow: hidden; }
+        .entity { width: 80%; height: 80%; position: absolute; bottom: -100%; left: 10%; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 3em; transition: bottom 0.1s; user-select: none; }
+        .entity.up { bottom: 10%; transition: bottom 0.2s ease-out; }
+        .type-normal { background: #5c3a21; } .type-normal::after { content: '🐗'; }
+        .type-golden { background: gold; } .type-golden::after { content: '👑'; }
+        .type-trap { background: #222; border: 2px solid var(--dzik-red); } .type-trap::after { content: '🥫'; }
+
+        .guessr-img-container { width: 100%; height: 400px; background: #222; border-radius: 10px; position: relative; overflow: hidden; margin-bottom: 20px; cursor: crosshair; background-size: cover; background-position: center; border: 2px solid #444; }
+        .found-marker { position: absolute; width: 40px; height: 40px; border: 4px solid var(--dzik-red); border-radius: 50%; transform: translate(-50%, -50%); display: none; pointer-events: none; box-shadow: 0 0 15px var(--dzik-red); }
+        .guessr-instruction { text-align: center; margin-bottom: 15px; color: #ccc; font-size: 1.1em; }
+        
+        .clicker-layout { display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px; }
+        .clicker-left { flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.4); padding: 40px; border-radius: 15px; border: 1px solid #333; }
+        .clicker-right { flex: 1.2; background: rgba(0,0,0,0.4); padding: 25px; border-radius: 15px; border: 1px solid #333; }
+        .barbell-btn { background: linear-gradient(135deg, #333, #111); border: 4px solid var(--dzik-red); border-radius: 50%; width: 220px; height: 220px; font-size: 2.5em; color: white; cursor: pointer; transition: transform 0.1s; box-shadow: 0 10px 30px rgba(255, 0, 0, 0.2); }
+        .barbell-btn:active { transform: scale(0.95); }
+        .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 12px; }
+        .shop-item button { background: var(--dzik-red); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .shop-item button:disabled { background: #444; color: #777; cursor: not-allowed; }
+        .exchange-btn { background: gold !important; color: black !important; }
+
+        /* Style dla Symulatora WK */
+        #wk-sim-canvas { width: 100%; max-width: 800px; height: 400px; background: #111; border: 2px solid #333; border-radius: 15px; display: block; margin: 0 auto; cursor: none; box-shadow: inset 0 0 20px #000; }
+        
+        .game-over-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 20px; display: none; z-index: 10; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <button class="btn-floating-rank" onclick="toggleRankModal(true)">🏆 Ranking</button>
+    <div class="rank-modal" id="rank-modal">
+        <div class="rank-content">
+            <button class="rank-close" onclick="toggleRankModal(false)">×</button>
+            <h2>RANKING OGÓLNY</h2>
+            <p class="prize">Walczysz o: <strong>Bon 1000 PLN do WK DZIK</strong></p>
+            <table class="rank-table">
+                <tr><th>Miejsce</th><th>Gracz</th><th>Punkty</th></tr>
+                <tr><td>🥇 1</td><td>OwCaWk</td><td>145,300</td></tr>
+                <tr><td>🥈 2</td><td>DzikZLasu</td><td>132,100</td></tr>
+                <tr><td>🥉 3</td><td>PonczekFan</td><td>128,450</td></tr>
+                <tr class="highlight" id="user-rank-row" style="display:none;"><td># 42</td><td>Dzik_123 (Ty)</td><td><span id="rank-hub-points">14,500</span></td></tr>
+            </table>
+            <p style="text-align: center; margin-top: 20px; color: #aaa; font-size: 0.9em;">Ranking łączy punkty ze wszystkich gier oraz kody z zawleczek.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>WK DZIK <span>HUB</span></h1>
+            <p>Platforma Turniejowa - Faza Beta</p>
+        </header>
+
+        <div id="hub-view" class="view-section view-active">
+            <div class="user-panel">
+                <div class="user-info">
+                    <h3 id="guest-text">Witaj Nieznajomy!</h3>
+                    <h3 id="user-name" style="display:none;">Zalogowany: Dzik_123</h3>
+                    <p id="user-points-display">Suma Punktów: <strong class="user-points-highlight" id="hub-points">14500</strong></p>
+                </div>
+                <div>
+                    <button class="btn-login" id="btn-login" onclick="simulateLogin()">ZALOGUJ SIĘ (WK Konto)</button>
+                </div>
+                <div class="code-input-wrapper" id="code-panel">
+                    <input type="text" id="promo-code" placeholder="Masz kod? Wpisz go...">
+                    <button onclick="applyPromoCode()">ODBLOKUJ</button>
+                </div>
+            </div>
+
+            <div class="games-grid">
+                <div class="game-thumbnail">
+                    <h2>Symulator Magazynu WK</h2>
+                    <p>Zarządzaj wysyłkami! Spakuj jak najwięcej zamówień w 60 sekund, omijając spadające ciężary!</p>
+                    <button class="btn-start" onclick="switchView('sim-view')">ZAGRAJ</button>
+                </div>
+                <div class="game-thumbnail">
+                    <h2>Uderz Dzika</h2>
+                    <p>Zręcznościówka. Punkty zdobyte na koniec trafiają do rankingu!</p>
+                    <button class="btn-start" onclick="switchView('whack-view')">ZAGRAJ</button>
+                </div>
+                <div class="game-thumbnail">
+                    <h2>Dzikoguessr</h2>
+                    <p>Wytęż wzrok! Szukaj puszek dzika ukrytych na kadrach z odcinków WK.</p>
+                    <button class="btn-start" onclick="switchView('guessr-view')">ZAGRAJ</button>
+                </div>
+                <div class="game-thumbnail">
+                    <h2>Kulturysta Clicker</h2>
+                    <p>Buduj masę i wymieniaj ją na cenne punkty do rankingu!</p>
+                    <button class="btn-start" onclick="switchView('clicker-view')">ZAGRAJ</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="sim-view" class="view-section">
+            <button class="btn-back" onclick="switchView('hub-view')">⬅ Wróć do Huba</button>
+            <div class="game-card">
+                <div class="game-header"><h2>Symulator Magazynu WK</h2></div>
+                <div class="stats-bar">
+                    <div>Paczki (Punkty): <span id="sim-score">0</span></div>
+                    <div style="color: var(--dzik-red);">Czas: <span id="sim-time">60</span>s</div>
+                </div>
+                <div style="position: relative;">
+                    <canvas id="wk-sim-canvas" width="800" height="400"></canvas>
+                    <div class="game-over-screen" id="sim-game-over">
+                        <h3 style="color: red; font-size: 3em;">KONIEC ZMIANY</h3>
+                        <p>Dodano do rankingu: <span id="sim-final">0</span> Pkt</p>
+                        <button class="btn-start" onclick="startSim()">Zagraj ponownie</button>
+                    </div>
+                </div>
+                <button class="btn-start" id="sim-start-btn" onclick="startSim()">ROZPOCZNIJ ZMIANĘ (START)</button>
+            </div>
+        </div>
+
+        <div id="whack-view" class="view-section">
+            <button class="btn-back" onclick="switchView('hub-view')">⬅ Wróć do Huba</button>
+            <div class="game-card">
+                <div class="game-header"><h2>Uderz Dzika Łopatą</h2></div>
+                <div class="stats-bar"><div>Obecny Wynik: <span id="whack-score">0</span></div><div style="color: var(--dzik-red);">Życia: <span id="whack-lives">❤️❤️❤️</span></div></div>
+                <div class="whack-board" id="whack-board">
+                    <div class="game-over-screen" id="whack-game-over">
+                        <h3 style="color: red; font-size: 3em;">KONIEC</h3>
+                        <p>Dodano do rankingu: <span id="whack-final">0</span> Pkt</p>
+                        <button class="btn-start" onclick="startWhack()">Zagraj ponownie</button>
+                    </div>
+                    <div class="hole"><div class="entity"></div></div><div class="hole"><div class="entity"></div></div><div class="hole"><div class="entity"></div></div><div class="hole"><div class="entity"></div></div><div class="hole"><div class="entity"></div></div><div class="hole"><div class="entity"></div></div><div class="hole"><div class="entity"></div></div><div class="hole"><div class="entity"></div></div><div class="hole"><div class="entity"></div></div>
+                </div>
+                <button class="btn-start" id="whack-start-btn" onclick="startWhack()">START</button>
+            </div>
+        </div>
+
+        <div id="guessr-view" class="view-section">
+            <button class="btn-back" onclick="switchView('hub-view')">⬅ Wróć do Huba</button>
+            <div class="game-card">
+                <div class="game-header"><h2>Dzikoguessr</h2></div>
+                <p class="guessr-instruction">Kliknij w miejsce na zdjęciu, w którym schowana jest puszka Dzika!</p>
+                <div class="stats-bar"><div>Punkty (sesja): <span id="guessr-score">0</span></div><div>Kadr: <span id="guessr-level">1/3</span></div></div>
+                <div class="guessr-img-container" id="guessr-img" onclick="checkCanClick(event)">
+                    <div class="found-marker" id="can-marker"></div>
+                </div>
+                <div class="game-over-screen" id="guessr-game-over">
+                    <h3 style="color: red; font-size: 3em;">WYGRANA!</h3>
+                    <p>Ukończyłeś wszystkie poziomy.</p>
+                    <button class="btn-start" onclick="startGuessr()">Zagraj od nowa</button>
+                </div>
+                <button class="btn-start" id="guessr-start-btn" onclick="startGuessr()">ROZPOCZNIJ POSZUKIWANIA</button>
+            </div>
+        </div>
+
+        <div id="clicker-view" class="view-section">
+            <button class="btn-back" onclick="switchView('hub-view')">⬅ Wróć do Huba</button>
+            <div class="game-card" style="max-width: 900px;">
+                <div class="game-header"><h2>Kulturysta Clicker</h2></div>
+                <div class="stats-bar"><div>MASA: <span id="clicker-mass" style="color: var(--dzik-red);">0</span> kg</div></div>
+                <div class="clicker-layout">
+                    <div class="clicker-left"><button class="barbell-btn" onclick="clickBarbell()"><span style="font-size: 1.5em;">🏋️‍♂️</span><br><span style="font-size: 0.4em;">WYCIŚNIJ</span></button></div>
+                    <div class="clicker-right">
+                        <div class="shop-item"><div><strong>Kreatyna (+1/klik)</strong></div><button onclick="buyUpgrade('creatine')" id="btn-creatine">Kup (<span id="cost-creatine">50</span>)</button></div>
+                        <div class="shop-item"><div><strong>Białko (+5/sek)</strong></div><button onclick="buyUpgrade('protein')" id="btn-protein">Kup (<span id="cost-protein">200</span>)</button></div>
+                        <div class="shop-item"><div><strong>Owca (+25/sek)</strong></div><button onclick="buyUpgrade('owca')" id="btn-owca">Kup (<span id="cost-owca">1000</span>)</button></div>
+                        <hr style="border-color: #333;">
+                        <div class="shop-item">
+                            <div><strong>Wymiana Punktów</strong><br><small>Oddaj 1000 kg masy za punkty</small></div>
+                            <button onclick="exchangeMassForPoints()" id="btn-exchange" class="exchange-btn">Odbierz 50 Pkt</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let globalHubPoints = 14500;
+        let isLoggedIn = false;
+
+        function updateGlobalPoints(pointsToAdd) {
+            globalHubPoints += pointsToAdd;
+            document.getElementById('hub-points').textContent = globalHubPoints;
+            document.getElementById('rank-hub-points').textContent = globalHubPoints;
+        }
+
+        function simulateLogin() {
+            isLoggedIn = true;
+            document.getElementById('guest-text').style.display = 'none';
+            document.getElementById('btn-login').style.display = 'none';
+            document.getElementById('user-name').style.display = 'block';
+            document.getElementById('user-points-display').style.display = 'block';
+            document.getElementById('code-panel').style.opacity = '1';
+            document.getElementById('code-panel').style.pointerEvents = 'auto';
+            document.getElementById('user-rank-row').style.display = 'table-row';
+            alert("Zalogowano pomyślnie! Twoje konto WK zostało połączone. Graj, a punkty będą się sumować.");
+        }
+
+        function toggleRankModal(show) {
+            document.getElementById('rank-modal').style.display = show ? 'flex' : 'none';
+        }
+
+        function applyPromoCode() {
+            if(!isLoggedIn) return;
+            const input = document.getElementById('promo-code');
+            if(input.value.trim() === "") return alert("Wpisz kod!");
+            updateGlobalPoints(500);
+            clickerMass += 5000; updateClickerUI();
+            alert("KOD ZAAKCEPTOWANY! +500 Pkt w Rankingu i +5000 Masy w Clickerze!");
+            input.value = "";
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('view-active'));
+            document.getElementById(viewId).classList.add('view-active');
+            
+            
+            if(viewId === 'hub-view') { 
+                whackTimeUp = true; clearTimeout(whackTimer); clearTimeout(whackEntityTimeout); 
+                isSimPlaying = false; clearInterval(simTimerInterval); cancelAnimationFrame(simAnimFrame);
+            }
+        }
+
+        
+        const simCanvas = document.getElementById('wk-sim-canvas');
+        const ctx = simCanvas.getContext('2d');
+        let simScore = 0;
+        let simTime = 60;
+        let isSimPlaying = false;
+        let simTimerInterval;
+        let simAnimFrame;
+        let simItems = [];
+        
+        let player = {
+            x: 350,
+            y: 340,
+            width: 80,
+            height: 40,
+            color: '#ff0000'
+        };
+
+        
+        simCanvas.addEventListener('mousemove', (e) => {
+            if (!isSimPlaying) return;
+            const rect = simCanvas.getBoundingClientRect();
+            
+            const scaleX = simCanvas.width / rect.width; 
+            let mouseX = (e.clientX - rect.left) * scaleX;
+            
+            player.x = mouseX - player.width / 2;
+            
+            
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > simCanvas.width) player.x = simCanvas.width - player.width;
+        });
+
+        function startSim() {
+            simScore = 0;
+            simTime = 60;
+            simItems = [];
+            isSimPlaying = true;
+            document.getElementById('sim-score').textContent = simScore;
+            document.getElementById('sim-time').textContent = simTime;
+            document.getElementById('sim-start-btn').style.display = 'none';
+            document.getElementById('sim-game-over').style.display = 'none';
+
+            simTimerInterval = setInterval(() => {
+                simTime--;
+                document.getElementById('sim-time').textContent = simTime;
+                if (simTime <= 0) {
+                    endSim();
+                }
+            }, 1000);
+
+            simLoop();
+        }
+
+        function simLoop() {
+            if (!isSimPlaying) return;
+
+            
+            ctx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+
+            
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            ctx.fillStyle = '#fff';
+            ctx.font = '24px Arial';
+            ctx.textBaseline = 'top';
+            ctx.fillText('🛒', player.x + 25, player.y + 5);
+
+           
+            if (Math.random() < 0.05 + (60 - simTime) * 0.001) { 
+                const isObstacle = Math.random() < 0.3; 
+                simItems.push({
+                    x: Math.random() * (simCanvas.width - 30),
+                    y: -30,
+                    size: 30,
+                    speed: 2 + Math.random() * 3 + (60 - simTime) * 0.05, 
+                    type: isObstacle ? 'weight' : 'package',
+                    emoji: isObstacle ? '🏋️‍♂️' : '📦'
+                });
+            }
+
+            
+            for (let i = simItems.length - 1; i >= 0; i--) {
+                let item = simItems[i];
+                item.y += item.speed;
+
+                ctx.font = '30px Arial';
+                ctx.fillText(item.emoji, item.x, item.y);
+
+                
+                if (item.x < player.x + player.width &&
+                    item.x + item.size > player.x &&
+                    item.y < player.y + player.height &&
+                    item.y + item.size > player.y) {
+                    
+                    
+                    if (item.type === 'weight') {
+                        simScore -= 20; 
+                        if(simScore < 0) simScore = 0;
+                        
+                        player.color = '#fff'; setTimeout(() => player.color = '#ff0000', 100);
+                    } else {
+                        simScore += 10; 
+                    }
+                    
+                    document.getElementById('sim-score').textContent = simScore;
+                    simItems.splice(i, 1);
+                    continue;
+                }
+
+                
+                if (item.y > simCanvas.height) {
+                    simItems.splice(i, 1);
+                }
+            }
+
+            simAnimFrame = requestAnimationFrame(simLoop);
+        }
+
+        function endSim() {
+            isSimPlaying = false;
+            clearInterval(simTimerInterval);
+            cancelAnimationFrame(simAnimFrame);
+            
+            updateGlobalPoints(simScore);
+            
+            document.getElementById('sim-game-over').style.display = 'flex';
+            document.getElementById('sim-final').textContent = simScore;
+            document.getElementById('sim-start-btn').style.display = 'block';
+            document.getElementById('sim-start-btn').textContent = 'ZAGRAJ PONOWNIE';
+        }
+
+        
+        const whackHoles = document.querySelectorAll('.hole'); const whackScoreEl = document.querySelector('#whack-score'); const whackLivesEl = document.querySelector('#whack-lives');
+        let whackLastHole, whackTimeUp = false, whackScore = 0, whackLives = 3, whackTimer, whackEntityTimeout;
+        function whackPopOut() {
+            if (whackLives <= 0) return endWhack();
+            const hole = whackHoles[Math.floor(Math.random() * whackHoles.length)];
+            const entity = hole.querySelector('.entity'); const rand = Math.random(); let type = rand > 0.9 ? 'golden' : (rand > 0.7 ? 'trap' : 'normal'), isHit = false; 
+            entity.className = 'entity ' + 'type-' + type; entity.classList.add('up');
+            const hitEntity = (e) => { if(!e.isTrusted) return; isHit = true; entity.classList.remove('up'); entity.removeEventListener('mousedown', hitEntity);
+                if (type === 'normal') whackScore += 10; else if (type === 'golden') whackScore += 50; else whackLives--;
+                whackScoreEl.textContent = whackScore; whackLivesEl.textContent = '❤️'.repeat(whackLives) + '🖤'.repeat(3 - whackLives); };
+            entity.addEventListener('mousedown', hitEntity);
+            whackEntityTimeout = setTimeout(() => { entity.classList.remove('up'); entity.removeEventListener('mousedown', hitEntity);
+                if (!isHit && type === 'normal') whackLives--; whackLivesEl.textContent = '❤️'.repeat(whackLives) + '🖤'.repeat(3 - whackLives);
+                if (whackLives > 0 && !whackTimeUp) whackTimer = setTimeout(whackPopOut, Math.random() * 500 + 200); else if (whackLives <= 0) endWhack();
+            }, Math.max(500, 1500 - (whackScore * 2)));
+        }
+        function startWhack() { whackScore = 0; whackLives = 3; whackScoreEl.textContent = 0; whackLivesEl.textContent = '❤️❤️❤️'; whackTimeUp = false; document.getElementById('whack-game-over').style.display = 'none'; document.getElementById('whack-start-btn').style.display = 'none'; clearTimeout(whackTimer); clearTimeout(whackEntityTimeout); document.querySelectorAll('.entity').forEach(e => e.classList.remove('up')); whackPopOut(); }
+        
+        function endWhack() { 
+            whackTimeUp = true; 
+            document.getElementById('whack-game-over').style.display = 'flex'; 
+            document.getElementById('whack-final').textContent = whackScore; 
+            document.getElementById('whack-start-btn').style.display = 'block';
+            updateGlobalPoints(whackScore); 
+        }
+
+        
+        const guessrImgContainer = document.getElementById('guessr-img'); 
+        const canMarker = document.getElementById('can-marker'); 
+        const guessrScoreEl = document.getElementById('guessr-score'); 
+        const guessrLevelEl = document.getElementById('guessr-level');
+        let guessrScore = 0, currentLevel = 0, canFound = false;
+        
+        const guessrLevels = [
+            { imgUrl: "url('https://placehold.co/800x400/111/fff?text=Kadr+z+Vloga+WK+1')", canX: 15, canY: 75 },
+            { imgUrl: "url('https://placehold.co/800x400/222/eee?text=Kadr+z+Magazynu+WK')", canX: 85, canY: 25 },
+            { imgUrl: "url('https://placehold.co/800x400/333/ccc?text=Trening+w+Garażu')", canX: 50, canY: 50 }
+        ];
+
+        function startGuessr() { 
+            guessrScore = 0; currentLevel = 0; 
+            guessrScoreEl.textContent = 0; 
+            document.getElementById('guessr-start-btn').style.display = 'none'; 
+            document.getElementById('guessr-game-over').style.display = 'none'; 
+            loadGuessrLevel(); 
+        }
+
+        function loadGuessrLevel() { 
+            if (currentLevel >= guessrLevels.length) { 
+                document.getElementById('guessr-game-over').style.display = 'flex'; 
+                document.getElementById('guessr-start-btn').style.display = 'block'; 
+                return; 
+            }
+            const lvl = guessrLevels[currentLevel]; 
+            guessrLevelEl.textContent = (currentLevel + 1) + "/" + guessrLevels.length; 
+            canFound = false; 
+            guessrImgContainer.style.backgroundImage = lvl.imgUrl; 
+            canMarker.style.display = 'none'; 
+        }
+
+        function checkCanClick(e) { 
+            if (canFound || currentLevel >= guessrLevels.length) return; 
+            
+            const lvl = guessrLevels[currentLevel]; 
+            const rect = guessrImgContainer.getBoundingClientRect(); 
+            const clickX = ((e.clientX - rect.left) / rect.width) * 100;
+            const clickY = ((e.clientY - rect.top) / rect.height) * 100;
+            
+            if (Math.abs(clickX - lvl.canX) < 10 && Math.abs(clickY - lvl.canY) < 10) { 
+                canFound = true; 
+                guessrScore += 100; 
+                guessrScoreEl.textContent = guessrScore; 
+                
+                canMarker.style.left = lvl.canX + "%"; 
+                canMarker.style.top = lvl.canY + "%"; 
+                canMarker.style.display = 'block'; 
+
+                updateGlobalPoints(100); 
+
+                setTimeout(() => { 
+                    currentLevel++; 
+                    loadGuessrLevel(); 
+                }, 1500); 
+            } 
+        }
+
+        
+        let clickerMass = 0, massPerClick = 1, massPerSecond = 0, costCreatine = 50, costProtein = 200, costOwca = 1000;
+        function clickBarbell() { clickerMass += massPerClick; updateClickerUI(); }
+        function buyUpgrade(type) { if (type === 'creatine' && clickerMass >= costCreatine) { clickerMass -= costCreatine; massPerClick += 1; costCreatine = Math.floor(costCreatine * 1.5); } else if (type === 'protein' && clickerMass >= costProtein) { clickerMass -= costProtein; massPerSecond += 5; costProtein = Math.floor(costProtein * 1.5); } else if (type === 'owca' && clickerMass >= costOwca) { clickerMass -= costOwca; massPerSecond += 25; costOwca = Math.floor(costOwca * 1.5); } updateClickerUI(); }
+        
+        function exchangeMassForPoints() {
+            if (clickerMass >= 1000) {
+                clickerMass -= 1000;
+                updateGlobalPoints(50); 
+                updateClickerUI();
+            }
+        }
+
+        function updateClickerUI() { 
+            document.getElementById('clicker-mass').textContent = clickerMass; 
+            document.getElementById('cost-creatine').textContent = costCreatine; 
+            document.getElementById('cost-protein').textContent = costProtein; 
+            document.getElementById('cost-owca').textContent = costOwca; 
+            document.getElementById('btn-creatine').disabled = clickerMass < costCreatine; 
+            document.getElementById('btn-protein').disabled = clickerMass < costProtein; 
+            document.getElementById('btn-owca').disabled = clickerMass < costOwca; 
+            document.getElementById('btn-exchange').disabled = clickerMass < 1000;
+        }
+        setInterval(() => { if (massPerSecond > 0) { clickerMass += massPerSecond; updateClickerUI(); } }, 1000);
+        updateClickerUI();
+    </script>
+</body>
+</html>
